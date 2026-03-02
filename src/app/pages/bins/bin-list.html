@@ -1,0 +1,143 @@
+<p-toast />
+<p-confirmDialog />
+
+<div class="card">
+    <!-- Header con botón de regreso -->
+    <div class="mb-4">
+        <p-button 
+            icon="pi pi-arrow-left" 
+            [text]="true" 
+            [rounded]="true"
+            (onClick)="goBack()"
+            label="Volver a Ubicaciones"
+            styleClass="mb-3">
+        </p-button>
+        <h2 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">
+            Bins de {{ location?.storageName }}
+        </h2>
+        <p class="text-surface-600 dark:text-surface-400 mt-2">
+            Gestiona los bins de esta ubicación
+        </p>
+    </div>
+
+    <!-- Botones de acción y búsqueda -->
+    <div class="flex justify-between items-start mb-4">
+        <div class="flex gap-3">
+            <p-button 
+                label="Nuevo Bin" 
+                icon="pi pi-plus" 
+                (onClick)="createNewBin()"
+                styleClass="p-button-success">
+            </p-button>
+            <p-button 
+                label="Generador" 
+                icon="pi pi-cog" 
+                (onClick)="openGenerator()"
+                styleClass="p-button-info">
+            </p-button>
+        </div>
+        <p-iconfield>
+            <p-inputicon styleClass="pi pi-search" />
+            <input 
+                pInputText 
+                type="text" 
+                [(ngModel)]="searchValue"
+                (input)="onSearch()"
+                placeholder="Buscar bins..." 
+                style="width: 250px" />
+            <p-inputicon 
+                *ngIf="searchValue" 
+                styleClass="pi pi-times cursor-pointer" 
+                (click)="clearSearch()" />
+        </p-iconfield>
+    </div>
+
+    <!-- Tabla de bins -->
+    <p-table 
+        [value]="filteredBins" 
+        [paginator]="true" 
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} bins"
+        styleClass="p-datatable-gridlines">
+        
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width:3rem"></th>
+                <th pSortableColumn="code" style="width: 20%">
+                    Código <p-sortIcon field="code" />
+                </th>
+                <th style="width: 25%">Contenido</th>
+                <th style="width: 15%">Cantidad</th>
+                <th pSortableColumn="status" style="width: 15%">
+                    Estado <p-sortIcon field="status" />
+                </th>
+                <th style="width: 15%">Activo</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-bin>
+            <tr>
+                <td>
+                    <p-button 
+                        icon="pi pi-ellipsis-v" 
+                        [text]="true" 
+                        [rounded]="true" 
+                        size="small"
+                        (onClick)="menu.toggle($event); menuItems = getMenuItems(bin)">
+                    </p-button>
+                </td>
+                <td>
+                    <span class="font-semibold text-primary">{{ bin.code }}</span>
+                </td>
+                <td>{{ bin.content || '-' }}</td>
+                <td>{{ bin.quantity || 0 }}</td>
+                <td>
+                    <p-tag 
+                        [value]="getStatusLabel(bin.status)" 
+                        [severity]="getStatusClass(bin.status)">
+                    </p-tag>
+                </td>
+                <td>
+                    <p-tag 
+                        [value]="bin.active ? 'Sí' : 'No'" 
+                        [severity]="bin.active ? 'success' : 'danger'">
+                    </p-tag>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="6" class="text-center py-8">
+                    <i class="pi pi-inbox text-4xl text-surface-400 mb-4 block"></i>
+                    <p class="text-surface-600 dark:text-surface-400 mb-4">No hay bins disponibles</p>
+                    <p-button 
+                        label="Crear Primer Bin" 
+                        icon="pi pi-plus" 
+                        (onClick)="createNewBin()">
+                    </p-button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<!-- Dialog de formulario de bin -->
+<p-menu #menu [model]="menuItems" [popup]="true" appendTo="body"></p-menu>
+<app-bin-form 
+    *ngIf="showBinFormDialog"
+    [(visible)]="showBinFormDialog"
+    [locationId]="locationId"
+    [bin]="editingBin"
+    (onSave)="loadBins()">
+</app-bin-form>
+
+<!-- Dialog de generador de bins -->
+<app-bin-generator 
+    *ngIf="showBinGeneratorDialog"
+    [(visible)]="showBinGeneratorDialog"
+    [locationId]="locationId"
+    (onGenerate)="loadBins()">
+</app-bin-generator>
